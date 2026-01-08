@@ -1,0 +1,65 @@
+[
+  {
+    "id": 1,
+    "name": "Abacha (African Salad)",
+    "price": 2500,
+    "desc": "Traditional cassava salad with ugba and fish.",
+    "category": "Main"
+  },
+  {
+    "id": 2,
+    "name": "Ofe Onugbu & Fufu",
+    "price": 3500,
+    "desc": "Bitter leaf soup served with pounded yam or fufu.",
+    "category": "Soups"
+  },
+  {
+    "id": 3,
+    "name": "Jollof Rice & Chicken",
+    "price": 3000,
+    "desc": "Smoky Nigerian Jollof with grilled chicken.",
+    "category": "Main"
+  },
+  {
+    "id": 4,
+    "name": "Pepper Soup (Goat Meat)",
+    "price": 2800,
+    "desc": "Spicy broth with tender goat meat chunks.",
+    "category": "Soups"
+  },
+  {
+    "id": 5,
+    "name": "Grilled Catfish",
+    "price": 5000,
+    "desc": "Whole grilled catfish with spicy sauce and chips.",
+    "category": "Main"
+  },
+  {
+    "id": 6,
+    "name": "Club Sandwich",
+    "price": 2200,
+    "desc": "Toasted bread, chicken, egg, and cheese.",
+    "category": "Snacks"
+  },
+  {
+    "id": 7,
+    "name": "Chapman",
+    "price": 1500,
+    "desc": "Signature fruity cocktail drink.",
+    "category": "Drinks"
+  },
+  {
+    "id": 8,
+    "name": "Palm Wine (Fresh)",
+    "price": 1000,
+    "desc": "Freshly tapped palm wine.",
+    "category": "Drinks"
+  },
+  {
+    "id": 9,
+    "name": "Egusi",
+    "price": 2020,
+    "desc": "wonderful",
+    "category": "Soups"
+  }
+]

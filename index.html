@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hotel Sunshine | Dining</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+    <h1>HOTEL SUNSHINE</h1>
+    <p>Independence Layout, Enugu, Nigeria</p>
+</header>
+
+<div class="container">
+    <!-- Menu Section -->
+    <main>
+        <h2>Our Menu</h2>
+        <br>
+        <input type="text" id="search-bar" placeholder="Search menu items..." class="search-bar">
+        <div id="category-filters" class="filters"></div>
+        <div class="menu-grid" id="menu-container">
+            <!-- Items injected via JS -->
+        </div>
+    </main>
+
+    <!-- Cart Section -->
+    <aside class="cart-panel" id="cart-panel">
+        <div class="cart-toggle" onclick="toggleCart()">Tap to view Cart</div>
+        <h3>Your Order</h3>
+        <div class="cart-items" id="cart-items">
+            <p style="text-align:center; color:#888; margin-top:20px;">Your cart is empty.</p>
+        </div>
+        <div class="total-section">
+            <span>Total:</span>
+            <span id="cart-total">₦0.00</span>
+        </div>
+        <button class="checkout-btn" onclick="generateReceipt()">Place Order</button>
+    </aside>
+</div>
+
+<!-- Receipt Modal -->
+<div class="modal" id="receipt-modal">
+    <div class="receipt">
+        <div class="receipt-header">
+            <h2>HOTEL SUNSHINE</h2>
+            <p>Enugu, Nigeria</p>
+            <p id="receipt-date"></p>
+            <p>Order ID: <span id="order-id"></span></p>
+        </div>
+        <div class="receipt-body" id="receipt-body">
+            <!-- Receipt items go here -->
+        </div>
+        <div class="receipt-total receipt-row">
+            <span>TOTAL</span>
+            <span id="receipt-total-amount"></span>
+        </div>
+        <div style="text-align: center; margin-top: 20px; font-size: 0.8rem;">
+            <p>Thanks for dining with us!</p>
+        </div>
+        <button class="print-btn" onclick="window.print()">Print Receipt</button>
+        <button class="close-btn" onclick="closeModal()">Close</button>
+    </div>
+</div>
+
+<script src="script.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,49 @@
+[
+  {
+    "id": 5415,
+    "items": [
+      {
+        "id": 1,
+        "name": "Abacha (African Salad)",
+        "price": 2500,
+        "desc": "Traditional cassava salad with ugba and fish.",
+        "image": "/uploads/1767845299491.png",
+        "qty": 1
+      },
+      {
+        "id": 2,
+        "name": "Ofe Onugbu & Fufu",
+        "price": 3500,
+        "desc": "Bitter leaf soup served with pounded yam or fufu.",
+        "qty": 1
+      }
+    ],
+    "total": 6000,
+    "createdAt": "2026-01-08T04:34:21.217Z",
+    "status": "Completed"
+  },
+  {
+    "id": 2736,
+    "items": [
+      {
+        "id": 5,
+        "name": "Grilled Catfish",
+        "price": 5000,
+        "desc": "Whole grilled catfish with spicy sauce and chips.",
+        "category": "Main",
+        "qty": 1
+      },
+      {
+        "id": 9,
+        "name": "Egusi",
+        "price": 2020,
+        "desc": "wonderful",
+        "category": "Soups",
+        "qty": 1
+      }
+    ],
+    "total": 7020,
+    "createdAt": "2026-01-08T08:55:42.574Z",
+    "status": "Completed"
+  }
+]

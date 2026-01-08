@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body { display: flex; justify-content: center; align-items: center; height: 100vh; }
+        .login-panel { background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 300px; text-align: center; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; }
+        button { width: 100%; padding: 10px; background: #333; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        button:hover { background: #FF8C00; }
+        .error { color: red; font-size: 0.9rem; margin-top: 10px; display: none; }
+    </style>
+</head>
+<body>
+    <div class="login-panel">
+        <h2>Admin Login</h2>
+        <input type="text" id="username" placeholder="Username">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="login()">Login</button>
+        <p class="error" id="error-msg">Invalid credentials</p>
+    </div>
+    <script>
+        async function login() {
+            const username = document.getElementById('username').value.trim();
+            const password = document.getElementById('password').value.trim();
+            const errorMsg = document.getElementById('error-msg');
+            
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success) {
+                        sessionStorage.setItem('authToken', data.token);
+                        window.location.href = '/admin.html';
+                    } else { errorMsg.style.display = 'block'; errorMsg.innerText = 'Invalid credentials'; }
+                } else { 
+                    errorMsg.style.display = 'block';
+                    // Help debug if the server wasn't restarted (404)
+                    errorMsg.innerText = res.status === 404 ? 'Error 404: Restart your server' : 'Invalid credentials';
+                }
+            } catch (e) {
+                console.error(e);
+                errorMsg.style.display = 'block';
+                errorMsg.innerText = 'Connection error';
+            }
+        }
+    </script>
+</body>
+</html>

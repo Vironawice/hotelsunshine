@@ -1,0 +1,11 @@
+[build]
+  functions = "functions"
+  publish = "."
+
+[functions]
+  included_files = ["menu.json", "orders.json", "uploads/**"]
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/api/:splat"
+  status = 200
