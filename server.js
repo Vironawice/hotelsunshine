@@ -1,10 +1,11 @@
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
-const fs = require('fs');
-const path = require('path');
 const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 const app = express();
+const router = express.Router();
 const port = process.env.PORT || 3000;
 
 // Middleware to parse JSON bodies
@@ -40,14 +41,17 @@ const orderSchema = new mongoose.Schema({
 const Order = mongoose.model('Order', orderSchema);
 
 // Configure Multer for image uploads
-const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
-        const dir = path.join(__dirname, 'uploads');
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir);
-        cb(null, dir);
-    },
-    filename: function (req, file, cb) {
-        cb(null, Date.now() + path.extname(file.originalname));
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: {
+        folder: 'hotel-sunshine',
+        allowed_formats: ['jpg', 'png', 'jpeg']
     }
 });
 const upload = multer({ storage: storage });
@@ -70,7 +74,7 @@ Menu.countDocuments().then(count => {
 });
 
 // API Endpoint to get menu data
-app.get('/api/menu', async (req, res) => {
+router.get('/menu', async (req, res) => {
     try {
         const menu = await Menu.find({}).sort({ id: 1 });
         res.json(menu);
@@ -78,7 +82,7 @@ app.get('/api/menu', async (req, res) => {
 });
 
 // API Endpoint to save menu data
-app.post('/api/menu', async (req, res) => {
+router.post('/menu', async (req, res) => {
     try {
         // Replace entire menu (simplest approach for the current admin UI)
         await Menu.deleteMany({});
@@ -88,14 +92,14 @@ app.post('/api/menu', async (req, res) => {
 });
 
 // API Endpoint to upload image
-app.post('/api/upload', upload.single('image'), async (req, res) => {
+router.post('/upload', upload.single('image'), async (req, res) => {
     const { id } = req.body;
     if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
 
     try {
         const item = await Menu.findOne({ id: id });
         if (item) {
-            item.image = '/uploads/' + req.file.filename;
+            item.image = req.file.path;
             await item.save();
             res.json({ success: true });
         } else {
@@ -105,7 +109,7 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
 });
 
 // API Endpoint to get all orders
-app.get('/api/orders', async (req, res) => {
+router.get('/orders', async (req, res) => {
     try {
         const orders = await Order.find({}).sort({ createdAt: -1 });
         res.json(orders);
@@ -113,7 +117,7 @@ app.get('/api/orders', async (req, res) => {
 });
 
 // API Endpoint to update an order status
-app.put('/api/orders/:id', async (req, res) => {
+router.put('/orders/:id', async (req, res) => {
     const id = parseInt(req.params.id);
     const { status } = req.body;
     
@@ -125,7 +129,7 @@ app.put('/api/orders/:id', async (req, res) => {
 });
 
 // API Endpoint to delete an order
-app.delete('/api/orders/:id', async (req, res) => {
+router.delete('/orders/:id', async (req, res) => {
     const id = parseInt(req.params.id);
     try {
         const result = await Order.findOneAndDelete({ id: id });
@@ -135,7 +139,7 @@ app.delete('/api/orders/:id', async (req, res) => {
 });
 
 // API Endpoint to save orders
-app.post('/api/orders', async (req, res) => {
+router.post('/orders', async (req, res) => {
     try {
         const order = new Order(req.body);
         await order.save();
@@ -144,7 +148,7 @@ app.post('/api/orders', async (req, res) => {
 });
 
 // API Endpoint for Admin Login
-app.post('/api/login', (req, res) => {
+router.post('/login', (req, res) => {
     const { username, password } = req.body;
     console.log('Login attempt:', username, password);
     if (username === 'admin' && password === 'sunshine') {
@@ -153,6 +157,10 @@ app.post('/api/login', (req, res) => {
         res.status(401).json({ error: 'Invalid credentials' });
     }
 });
+
+// Mount the router for both local and Netlify paths
+app.use('/api', router);
+app.use('/.netlify/functions/api', router);
 
 // Start the server
 if (require.main === module) {
