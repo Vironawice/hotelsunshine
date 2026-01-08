@@ -14,6 +14,10 @@ app.use(express.json());
 // Serve static files (index.html, styles.css, script.js) from the current directory
 app.use(express.static(__dirname));
 
+if (!process.env.MONGODB_URI) {
+    console.error("Error: MONGODB_URI is not defined in environment variables.");
+}
+
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI)
     .then(() => console.log('Connected to MongoDB'))
@@ -78,7 +82,10 @@ router.get('/menu', async (req, res) => {
     try {
         const menu = await Menu.find({}).sort({ id: 1 });
         res.json(menu);
-    } catch (err) { res.status(500).json({ error: 'Failed to read menu' }); }
+    } catch (err) {
+        console.error("Menu fetch error:", err);
+        res.status(500).json({ error: 'Failed to read menu', details: err.message });
+    }
 });
 
 // API Endpoint to save menu data
