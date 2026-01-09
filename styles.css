@@ -221,3 +221,37 @@ header p { font-size: 0.9rem; opacity: 0.8; }
     .receipt { box-shadow: none; width: 100%; }
     .print-btn, .close-btn { display: none; }
 }
+
+/* Location Selector Styles */
+.location-selector {
+    background: var(--white);
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: var(--shadow);
+    margin-bottom: 20px;
+}
+.location-selector select, .location-selector input {
+    width: 100%;
+    padding: 10px;
+    margin-top: 5px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+}
+
+/* Loading Spinner */
+.spinner {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid #FF8C00;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    animation: spin 1s linear infinite;
+    margin: 40px auto;
+}
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+@media print {
+    .no-print { display: none !important; }
+    body { background-color: white; }
+    main { padding: 0; }
+}

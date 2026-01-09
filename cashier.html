@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cashier - Incoming Orders</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body { font-family: sans-serif; background-color: #f4f4f4; padding: 20px; }
+        .container { max-width: 800px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: #333; color: white; padding: 15px; border-radius: 8px; }
+        .panel { background: white; padding: 15px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); border-left: 5px solid #FF8C00; }
+        .panel.completed { border-left-color: #4CAF50; }
+        .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; color: white; background-color: #333; }
+        .btn-logout { background-color: #d9534f; }
+        .btn-complete { background-color: #4CAF50; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Incoming Orders</h1>
+            <button class="btn btn-logout" onclick="logout()">Logout</button>
+        </div>
+        <div id="orders-list">
+            <p>Loading orders...</p>
+        </div>
+    </div>
+
+    <script>
+        if (!sessionStorage.getItem('authToken') && !localStorage.getItem('authToken')) {
+            window.location.href = '/login.html';
+        }
+
+        let lastOrderId = null;
+        let notificationSoundUrl = 'https://actions.google.com/sounds/v1/alarms/beep_short.ogg';
+        const statusSteps = [
+            "Received",
+            "Order Placed",
+            "Processing",
+            "Processed",
+            "Packing Order",
+            "Your food is coming up",
+            "Completed Order"
+        ];
+
+        // Load custom sound
+        fetch('/api/settings/sound')
+            .then(res => res.json())
+            .then(data => { if(data.url) notificationSoundUrl = data.url; })
+            .catch(console.error);
+
+        async function loadOrders() {
+            const container = document.getElementById('orders-list');
+            try {
+                const res = await fetch('/api/orders');
+                if (!res.ok) throw new Error('Failed to fetch');
+                const orders = await res.json();
+
+                // Play sound on new order
+                if (orders.length > 0) {
+                    const latestId = orders[0].id;
+                    // Only play if we have a previous ID to compare to, and it's different
+                    if (lastOrderId !== null && latestId !== lastOrderId) {
+                        new Audio(notificationSoundUrl).play().catch(e => console.log('Audio play failed', e));
+                    }
+                    lastOrderId = latestId;
+                }
+
+                if (orders.length === 0) {
+                    container.innerHTML = '<p>No orders found.</p>';
+                    return;
+                }
+
+                container.innerHTML = orders.map(order => {
+                    const date = new Date(order.createdAt).toLocaleTimeString();
+                    const itemsHtml = (order.items || []).map(i => {
+                        const statusIcon = i.completed ? '✅' : '⏳';
+                        return `<li>${statusIcon} ${i.qty}x ${i.name}</li>`;
+                    }).join('');
+                    const status = order.status || 'Received';
+                    const isCompleted = status === 'Completed Order';
+                    
+                    return `
+                        <div class="panel ${isCompleted ? 'completed' : ''}">
+                            <div style="display:flex; justify-content:space-between; border-bottom:1px solid #eee; padding-bottom:10px; margin-bottom:10px;">
+                                <strong>Order #${order.id}</strong>
+                                <span style="color:#666;">${date}</span>
+                            </div>
+                            <div><strong>Location:</strong> ${order.location || 'N/A'}</div>
+                            <div><strong>Customer:</strong> ${order.customer ? order.customer.name : 'Guest'}</div>
+                            <div style="margin: 10px 0;"><strong>Items:</strong> <ul style="margin: 5px 0; padding-left: 20px;">${itemsHtml}</ul></div>
+                            <div style="font-size: 1.1em; font-weight: bold;">Total: ₦${order.total.toLocaleString()}</div>
+                            
+                            <div style="margin-top:15px; padding-top:10px; border-top:1px solid #eee;">
+                                <label><strong>Update Status:</strong></label>
+                                <select onchange="updateStatus(${order.id}, this.value)" style="padding:5px; margin-left:10px; border-radius:4px;">
+                                    ${statusSteps.map(step => `<option value="${step}" ${status === step || (status === 'Pending' && step === 'Received') ? 'selected' : ''}>${step}</option>`).join('')}
+                                </select>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function updateStatus(id, newStatus) {
+            try {
+                await fetch(`/api/orders/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                loadOrders();
+            } catch (e) { alert('Error updating order'); }
+        }
+
+        function logout() {
+            sessionStorage.removeItem('authToken');
+            localStorage.removeItem('authToken');
+            window.location.href = '/login.html';
+        }
+
+        // Poll every 5 seconds for faster cashier updates
+        loadOrders();
+        setInterval(loadOrders, 5000);
+    </script>
+</body>
+</html>

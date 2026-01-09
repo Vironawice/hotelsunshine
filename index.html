@@ -11,6 +11,7 @@
 <header>
     <h1>HOTEL SUNSHINE</h1>
     <p>Independence Layout, Enugu, Nigeria</p>
+    <button onclick="openTrackModal()" style="margin-top:10px; background:transparent; border:1px solid #FF8C00; color:#FF8C00; padding:5px 10px; border-radius:4px; cursor:pointer;">Track Order</button>
 </header>
 
 <div class="container">
@@ -24,6 +25,23 @@
             <!-- Items injected via JS -->
         </div>
     </main>
+<div class="location-selector">
+    <h3>Where are you ordering from?</h3>
+    <select id="location-select" onchange="toggleRoomInput()">
+        <option value="">-- Select Location --</option>
+        <option value="Room">Room</option>
+        <option value="Tropics bar">Tropics bar</option>
+        <option value="Restaurant">Restaurant</option>
+        <option value="Eric's meeting room">Eric's meeting room</option>
+        <option value="Kenny's Sports bar">Kenny's Sports bar</option>
+        <option value="Lobby bar">Lobby bar</option>
+    </select>
+    
+    <div id="room-input-container" style="display:none; margin-top: 10px;">
+        <label for="room-number">Room Number:</label>
+        <input type="text" id="room-number" placeholder="e.g. 101">
+    </div>
+</div>
 
     <!-- Cart Section -->
     <aside class="cart-panel" id="cart-panel">
@@ -61,6 +79,24 @@
         </div>
         <button class="print-btn" onclick="window.print()">Print Receipt</button>
         <button class="close-btn" onclick="closeModal()">Close</button>
+    </div>
+</div>
+
+<!-- Track Order Modal -->
+<div class="modal" id="track-modal">
+    <div class="receipt" style="width: 400px;">
+        <div class="receipt-header">
+            <h2>Track Your Order</h2>
+        </div>
+        <div style="margin: 20px 0;">
+            <input type="number" id="track-order-id" placeholder="Enter Order ID (e.g. 1234)" style="width:100%; padding:10px; margin-bottom:10px;">
+            <button onclick="trackOrder()" class="checkout-btn">Check Status</button>
+        </div>
+        <div id="track-result" style="display:none; text-align:left;">
+            <div style="background:#eee; height:20px; border-radius:10px; overflow:hidden; margin-bottom:10px;"><div id="track-progress" style="background:#FF8C00; height:100%; width:0%; transition:width 0.5s;"></div></div>
+            <p style="text-align:center; font-weight:bold; font-size:1.1em;" id="track-status-text"></p>
+        </div>
+        <button class="close-btn" onclick="document.getElementById('track-modal').style.display='none'">Close</button>
     </div>
 </div>
 

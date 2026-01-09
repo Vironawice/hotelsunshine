@@ -19,13 +19,25 @@
         <h2>Admin Login</h2>
         <input type="text" id="username" placeholder="Username">
         <input type="password" id="password" placeholder="Password">
+        <div style="display: flex; justify-content: space-between; margin: 5px 0 15px 0;">
+            <div style="display: flex; align-items: center;">
+                <input type="checkbox" id="show-password" onclick="togglePassword()" style="width: auto; margin: 0 5px 0 0;">
+                <label for="show-password" style="font-size: 0.9rem; color: #666; cursor: pointer;">Show Password</label>
+            </div>
+            <div style="display: flex; align-items: center;">
+                <input type="checkbox" id="remember-me" style="width: auto; margin: 0 5px 0 0;">
+                <label for="remember-me" style="font-size: 0.9rem; color: #666; cursor: pointer;">Remember Me</label>
+            </div>
+        </div>
         <button onclick="login()">Login</button>
         <p class="error" id="error-msg">Invalid credentials</p>
+        <a href="#" onclick="alert('Please contact the System Administrator to reset your password.'); return false;" style="display:block; margin-top:15px; color:#666; text-decoration:none; font-size:0.9rem;">Forgot Password?</a>
     </div>
     <script>
         async function login() {
             const username = document.getElementById('username').value.trim();
             const password = document.getElementById('password').value.trim();
+            const rememberMe = document.getElementById('remember-me').checked;
             const errorMsg = document.getElementById('error-msg');
             
             try {
@@ -38,8 +50,24 @@
                 if (res.ok) {
                     const data = await res.json();
                     if (data.success) {
-                        sessionStorage.setItem('authToken', data.token);
-                        window.location.href = '/admin.html';
+                        if (rememberMe) {
+                            localStorage.setItem('authToken', data.token);
+                        } else {
+                            sessionStorage.setItem('authToken', data.token);
+                        }
+                        if (data.role === 'worker') {
+                            window.location.href = '/transactions.html';
+                        } else if (data.role === 'cashier') {
+                            window.location.href = '/cashier.html';
+                        } else if (data.role === 'kitchen') {
+                            window.location.href = '/kitchen.html';
+                        } else if (data.role === 'bar') {
+                            window.location.href = '/bar.html';
+                        } else if (data.role === 'manager') {
+                            window.location.href = '/manager.html';
+                        } else {
+                            window.location.href = '/admin.html';
+                        }
                     } else { errorMsg.style.display = 'block'; errorMsg.innerText = 'Invalid credentials'; }
                 } else { 
                     errorMsg.style.display = 'block';
@@ -50,6 +78,15 @@
                 console.error(e);
                 errorMsg.style.display = 'block';
                 errorMsg.innerText = 'Connection error';
+            }
+        }
+
+        function togglePassword() {
+            const passwordInput = document.getElementById('password');
+            if (passwordInput.type === "password") {
+                passwordInput.type = "text";
+            } else {
+                passwordInput.type = "password";
             }
         }
     </script>

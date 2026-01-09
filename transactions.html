@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Transactions</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body { font-family: sans-serif; background-color: #f4f4f4; padding: 20px; }
+        .container { max-width: 1000px; margin: 0 auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .controls { display: flex; gap: 10px; align-items: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: #333; color: white; }
+        tr:hover { background-color: #f5f5f5; }
+        .total-section { margin-top: 20px; text-align: right; font-size: 1.2em; font-weight: bold; }
+        .btn { padding: 8px 16px; border: none; border-radius: 4px; cursor: pointer; color: white; background-color: #333; }
+        .btn:hover { background-color: #555; }
+        .btn-logout { background-color: #d9534f; }
+        .btn-logout:hover { background-color: #c9302c; }
+        
+        @media print {
+            .no-print { display: none; }
+            body { background: white; padding: 0; }
+            .container { box-shadow: none; max-width: 100%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Daily Transactions</h1>
+            <div class="controls no-print">
+                <select id="filterType" onchange="toggleFilterInputs()" style="padding: 8px; border-radius: 4px; border: 1px solid #ccc;">
+                    <option value="day">Day</option>
+                    <option value="week">Week</option>
+                    <option value="month">Month</option>
+                    <option value="year">Year</option>
+                </select>
+                <input type="date" id="datePicker" onchange="loadTransactions()">
+                <input type="month" id="monthPicker" onchange="loadTransactions()" style="display:none;">
+                <select id="yearPicker" onchange="loadTransactions()" style="display:none; padding: 8px; border-radius: 4px; border: 1px solid #ccc;"></select>
+                <button class="btn" onclick="exportToCSV()">Export CSV</button>
+                <button class="btn" onclick="window.print()">Print Report</button>
+                <button class="btn btn-logout" onclick="logout()">Logout</button>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Time</th>
+                    <th>Location</th>
+                    <th>Items</th>
+                    <th>Total (₦)</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody id="transactionTable">
+                <!-- Transactions go here -->
+            </tbody>
+        </table>
+
+        <div class="total-section">
+            Total Items: <span id="totalItems">0</span> | Total Sales: ₦<span id="totalSales">0</span>
+        </div>
+    </div>
+
+    <script>
+        // Set default date to today
+        const today = new Date();
+        // Handle timezone offset for correct local date string
+        const localDate = new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+        document.getElementById('datePicker').value = localDate;
+        document.getElementById('monthPicker').value = localDate.slice(0, 7);
+
+        // Populate Year Picker
+        const yearSelect = document.getElementById('yearPicker');
+        const currentYear = today.getFullYear();
+        for(let i = currentYear; i >= currentYear - 5; i--) {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.innerText = i;
+            yearSelect.appendChild(opt);
+        }
+        
+        // Store filtered orders for export
+        let currentDailyOrders = [];
+
+        function toggleFilterInputs() {
+            const type = document.getElementById('filterType').value;
+            const datePicker = document.getElementById('datePicker');
+            const monthPicker = document.getElementById('monthPicker');
+            const yearPicker = document.getElementById('yearPicker');
+
+            datePicker.style.display = 'none';
+            monthPicker.style.display = 'none';
+            yearPicker.style.display = 'none';
+
+            if (type === 'day' || type === 'week') {
+                datePicker.style.display = 'inline-block';
+            } else if (type === 'month') {
+                monthPicker.style.display = 'inline-block';
+            } else if (type === 'year') {
+                yearPicker.style.display = 'inline-block';
+            }
+            loadTransactions();
+        }
+
+        async function loadTransactions() {
+            const token = sessionStorage.getItem('authToken') || localStorage.getItem('authToken');
+            if (!token) {
+                window.location.href = '/login.html';
+                return;
+            }
+
+            const filterType = document.getElementById('filterType').value;
+
+            try {
+                const res = await fetch('/api/orders');
+                const orders = await res.json();
+                
+                const tbody = document.getElementById('transactionTable');
+                tbody.innerHTML = '';
+                
+                let total = 0;
+                let totalItems = 0;
+
+                // Filter orders by selected date
+                const dailyOrders = orders.filter(order => {
+                    const orderDate = new Date(order.createdAt);
+                    
+                    if (filterType === 'day') {
+                        const dateInput = document.getElementById('datePicker').value;
+                        if (!dateInput) return false;
+                        const [y, m, d] = dateInput.split('-').map(Number);
+                        const selectedDate = new Date(y, m-1, d);
+                        return orderDate.toDateString() === selectedDate.toDateString();
+                    } else if (filterType === 'week') {
+                        const dateInput = document.getElementById('datePicker').value;
+                        if (!dateInput) return false;
+                        const [y, m, d] = dateInput.split('-').map(Number);
+                        const selectedDate = new Date(y, m-1, d);
+                        
+                        const startOfWeek = new Date(selectedDate);
+                        startOfWeek.setDate(selectedDate.getDate() - selectedDate.getDay()); // Sunday
+                        startOfWeek.setHours(0,0,0,0);
+                        
+                        const endOfWeek = new Date(startOfWeek);
+                        endOfWeek.setDate(startOfWeek.getDate() + 6); // Saturday
+                        endOfWeek.setHours(23,59,59,999);
+                        
+                        return orderDate >= startOfWeek && orderDate <= endOfWeek;
+                    } else if (filterType === 'month') {
+                        const [y, m] = document.getElementById('monthPicker').value.split('-');
+                        return orderDate.getFullYear() === parseInt(y) && orderDate.getMonth() === (parseInt(m) - 1);
+                    } else if (filterType === 'year') {
+                        const y = parseInt(document.getElementById('yearPicker').value);
+                        return orderDate.getFullYear() === y;
+                    }
+                    return false;
+                });
+                currentDailyOrders = dailyOrders;
+
+                dailyOrders.forEach(order => {
+                    const tr = document.createElement('tr');
+                    const time = new Date(order.createdAt).toLocaleTimeString();
+                    const itemsList = order.items.map(i => `${i.qty}x ${i.name}`).join(', ');
+                    const location = order.location || '-';
+                    
+                    tr.innerHTML = `
+                        <td>#${order.id}</td>
+                        <td>${time}</td>
+                        <td>${location}</td>
+                        <td>${itemsList}</td>
+                        <td>${order.total.toLocaleString()}</td>
+                        <td>${order.status}</td>
+                    `;
+                    tbody.appendChild(tr);
+                    total += order.total;
+                    totalItems += order.items.reduce((sum, item) => sum + (item.qty || 1), 0);
+                });
+
+                document.getElementById('totalSales').innerText = total.toLocaleString();
+                document.getElementById('totalItems').innerText = totalItems;
+
+                if (dailyOrders.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">No transactions found for this period.</td></tr>';
+                }
+
+            } catch (err) {
+                console.error('Error loading transactions:', err);
+            }
+        }
+
+        function exportToCSV() {
+            if (currentDailyOrders.length === 0) return alert('No transactions to export for this period.');
+            
+            const headers = ['Order ID', 'Time', 'Location', 'Items', 'Total', 'Status'];
+            const rows = currentDailyOrders.map(o => {
+                const time = new Date(o.createdAt).toLocaleTimeString();
+                const items = o.items.map(i => `${i.qty || 1}x ${i.name}`).join('; ');
+                // Escape quotes for CSV format
+                const safeItems = `"${items.replace(/"/g, '""')}"`;
+                const location = `"${(o.location || '').replace(/"/g, '""')}"`;
+                return [o.id, time, location, safeItems, o.total, o.status].join(',');
+            });
+            
+            const csvContent = [headers.join(','), ...rows].join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            const filterType = document.getElementById('filterType').value;
+            link.setAttribute("download", `transactions_${filterType}_report.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        }
+
+        function logout() {
+            sessionStorage.removeItem('authToken');
+            localStorage.removeItem('authToken');
+            window.location.href = '/login.html';
+        }
+
+        // Initial load
+        loadTransactions();
+    </script>
+</body>
+</html>

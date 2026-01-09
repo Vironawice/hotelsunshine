@@ -3,18 +3,18 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Admin — Menu Editor</title>
+  <title>Manager Dashboard</title>
   <link rel="stylesheet" href="/styles.css">
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
   <main style="padding:16px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-      <h1>Menu Editor</h1>
+    <div class="no-print" style="display:flex;justify-content:space-between;align-items:center;">
+      <h1>Manager Dashboard</h1>
       <button id="logout" style="background:#f44336;color:white;border:none;padding:10px 20px;border-radius:4px;cursor:pointer;">Logout</button>
     </div>
     
-    <div style="margin: 15px 0; padding: 15px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px;">
+    <div class="no-print" style="margin: 15px 0; padding: 15px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px;">
       <h3>Add New Item / Category</h3>
       <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px; margin-bottom: 10px;">
         <input type="text" id="new-name" placeholder="Item Name" style="padding: 8px; border: 1px solid #ccc; border-radius: 4px;">
@@ -27,49 +27,33 @@
       <button id="cancel-edit-btn" style="display:none; background: #777; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-left: 5px;">Cancel Edit</button>
     </div>
 
-    <h3>Current Menu Items</h3>
-    <div style="margin-bottom: 10px;">
+    <h3 class="no-print">Current Menu Items</h3>
+    <div class="no-print" style="margin-bottom: 10px;">
       <label for="admin-category-filter">Filter by Category: </label>
       <select id="admin-category-filter" style="padding: 5px;"><option value="All">All</option></select>
       <input type="text" id="admin-search-bar" placeholder="Search items..." style="padding: 5px; margin-left: 10px; border: 1px solid #ccc; border-radius: 4px;">
     </div>
-    <p style="font-size: 0.9em; color: #666; margin-bottom: 10px;">Drag and drop rows to reorder items.</p>
-    <div id="menu-table-container" style="margin-bottom: 20px; overflow-x: auto;"></div>
+    <p class="no-print" style="font-size: 0.9em; color: #666; margin-bottom: 10px;">Drag and drop rows to reorder items.</p>
+    <div id="menu-table-container" class="no-print" style="margin-bottom: 20px; overflow-x: auto;"></div>
 
-    <details style="margin-bottom: 20px; border: 1px solid #ddd; padding: 10px; border-radius: 4px;">
-      <summary style="cursor: pointer; font-weight: bold;">Advanced: Raw JSON Editor</summary>
-      <p>Edit the menu JSON below and click Save.</p>
-      <textarea id="menu-json" style="width:100%;height:360px;font-family:monospace;">Loading...</textarea>
-      <div style="margin-top:12px;">
-        <button id="save">Save Menu</button>
-        <button id="reload">Reload From Server</button>
-        <span id="status" style="margin-left:12px;color:green"></span>
-      </div>
-    </details>
-
-    <div style="margin-top: 15px; padding: 15px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px;">
+    <div class="no-print" style="margin-top: 15px; padding: 15px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px;">
       <h3>Upload Image for Item</h3>
       <select id="item-select" style="padding: 5px;"></select>
       <input type="file" id="image-input" accept="image/*">
       <button id="upload-btn" style="padding: 5px 10px; cursor: pointer;">Upload Image</button>
     </div>
 
-    <div style="margin-top: 15px; padding: 15px; background: #f9f9f9; border: 1px solid #ddd; border-radius: 4px;">
-      <h3>Notification Sound</h3>
-      <input type="file" id="sound-input" accept="audio/*">
-      <button id="upload-sound-btn" style="padding: 5px 10px; cursor: pointer;">Upload Custom Sound</button>
-    </div>
-
-    <hr style="margin: 30px 0; border: 0; border-top: 1px solid #ccc;">
+    <hr class="no-print" style="margin: 30px 0; border: 0; border-top: 1px solid #ccc;">
 
     <h1>Sales Dashboard</h1>
-    <button id="export-csv" style="margin-bottom: 15px;">Export Sales CSV</button>
+    <button id="export-csv" class="no-print" style="margin-bottom: 15px;">Export Sales CSV</button>
+    <button id="print-sales" class="no-print" style="margin-bottom: 15px; margin-left: 10px;">Print Report</button>
     <div style="max-width: 800px; margin-bottom: 30px;"><canvas id="sales-chart"></canvas></div>
 
-    <h1>Incoming Orders</h1>
-    <button id="refresh-orders" style="margin-bottom: 15px;">Refresh Orders</button>
-    <div id="orders-list"></div>
+    <h1 class="no-print">Incoming Orders</h1>
+    <button id="refresh-orders" class="no-print" style="margin-bottom: 15px;">Refresh Orders</button>
+    <div id="orders-list" class="no-print"></div>
   </main>
-  <script src="/admin.js"></script>
+  <script src="/manager.js"></script>
 </body>
 </html>

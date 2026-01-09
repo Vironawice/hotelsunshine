@@ -94,6 +94,27 @@ async function generateReceipt() {
         return;
     }
 
+    const locationSelect = document.getElementById('location-select');
+    let location = locationSelect.value;
+
+    if (!location) {
+        alert("Please select where you are ordering from.");
+        return;
+    }
+
+    if (location === 'Room') {
+        const roomNum = document.getElementById('room-number').value.trim();
+        if (!roomNum) {
+            alert("Please enter your room number.");
+            return;
+        }
+        if (!/^\d+$/.test(roomNum)) {
+            alert("Please enter a valid room number (digits only).");
+            return;
+        }
+        location = `Room ${roomNum}`;
+    }
+
     const modal = document.getElementById('receipt-modal');
     const receiptBody = document.getElementById('receipt-body');
     const dateEl = document.getElementById('receipt-date');
@@ -113,6 +134,7 @@ async function generateReceipt() {
                 id: orderId,
                 items: cart,
                 total: cart.reduce((sum, item) => sum + (item.price * item.qty), 0),
+                location: location,
                 createdAt: now.toISOString()
             })
         });
@@ -125,7 +147,7 @@ async function generateReceipt() {
     orderIdEl.innerText = '#' + orderId;
 
     let total = 0;
-    receiptBody.innerHTML = cart.map(item => {
+    let receiptContent = cart.map(item => {
         const itemTotal = item.price * item.qty;
         total += itemTotal;
         return `
@@ -136,6 +158,15 @@ async function generateReceipt() {
         `;
     }).join('');
 
+    // Add Location to receipt
+    receiptContent = `<div style="margin-bottom:10px; padding-bottom:5px; border-bottom:1px dashed #333;"><strong>Location:</strong> ${location}</div>` + receiptContent;
+
+    // Add Intercom message for Room orders
+    if (location.startsWith('Room')) {
+        receiptContent += `<div style="margin-top:15px; font-weight:bold; font-size:0.9rem;">Please dial our intercom number 321 to confirm your transaction</div>`;
+    }
+
+    receiptBody.innerHTML = receiptContent;
     totalEl.innerText = '₦' + total.toLocaleString();
     modal.style.display = 'flex';
 }
@@ -171,6 +202,7 @@ window.filterMenu = (category) => {
 
 // Initialize
 async function initMenu() {
+    menuContainer.innerHTML = '<div class="spinner" style="grid-column: 1 / -1; justify-self: center;"></div>';
     try {
         const response = await fetch('/api/menu');
         menuData = await response.json();
@@ -184,3 +216,54 @@ async function initMenu() {
 }
 
 initMenu();
+function toggleRoomInput() {
+    const select = document.getElementById('location-select');
+    const roomContainer = document.getElementById('room-input-container');
+    if (select.value === 'Room') {
+        roomContainer.style.display = 'block';
+    } else {
+        roomContainer.style.display = 'none';
+    }
+}
+
+function openTrackModal() {
+    document.getElementById('track-modal').style.display = 'flex';
+    document.getElementById('track-result').style.display = 'none';
+    document.getElementById('track-order-id').value = '';
+}
+
+async function trackOrder() {
+    const id = document.getElementById('track-order-id').value;
+    if (!id) return alert('Please enter an Order ID');
+
+    try {
+        const res = await fetch('/api/orders');
+        const orders = await res.json();
+        const order = orders.find(o => o.id == id);
+
+        if (!order) {
+            alert('Order not found');
+            return;
+        }
+
+        const statusSteps = [
+            "Received",
+            "Order Placed",
+            "Processing",
+            "Processed",
+            "Packing Order",
+            "Your food is coming up",
+            "Completed Order"
+        ];
+
+        let status = order.status || 'Received';
+        if (status === 'Pending') status = 'Received';
+        
+        const index = statusSteps.indexOf(status);
+        const percentage = index === -1 ? 5 : Math.max(5, Math.round(((index + 1) / statusSteps.length) * 100));
+
+        document.getElementById('track-result').style.display = 'block';
+        document.getElementById('track-progress').style.width = percentage + '%';
+        document.getElementById('track-status-text').innerText = status;
+    } catch (e) { alert('Error tracking order'); }
+}

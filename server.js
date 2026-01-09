@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
+const rateLimit = require('express-rate-limit');
 const multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const { CloudinaryStorage } = require('multer-storage-cloudinary');
@@ -38,11 +39,18 @@ const orderSchema = new mongoose.Schema({
     id: Number,
     items: Array,
     total: Number,
+    location: String,
     customer: Object,
     status: { type: String, default: 'Pending' },
     createdAt: { type: Date, default: Date.now }
 });
 const Order = mongoose.model('Order', orderSchema);
+
+const settingsSchema = new mongoose.Schema({
+    key: String,
+    value: String
+});
+const Settings = mongoose.model('Settings', settingsSchema);
 
 // Configure Multer for image uploads
 cloudinary.config({
@@ -55,7 +63,7 @@ const storage = new CloudinaryStorage({
     cloudinary: cloudinary,
     params: {
         folder: 'hotel-sunshine',
-        allowed_formats: ['jpg', 'png', 'jpeg']
+        resource_type: 'auto'
     }
 });
 const upload = multer({ storage: storage });
@@ -115,6 +123,28 @@ router.post('/upload', upload.single('image'), async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Database error' }); }
 });
 
+// API Endpoint to get notification sound
+router.get('/settings/sound', async (req, res) => {
+    try {
+        const setting = await Settings.findOne({ key: 'notificationSound' });
+        const defaultSound = 'https://actions.google.com/sounds/v1/alarms/beep_short.ogg';
+        res.json({ url: setting ? setting.value : defaultSound });
+    } catch (err) { res.status(500).json({ error: 'Failed to fetch settings' }); }
+});
+
+// API Endpoint to upload notification sound
+router.post('/upload-sound', upload.single('sound'), async (req, res) => {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+    try {
+        await Settings.findOneAndUpdate(
+            { key: 'notificationSound' },
+            { value: req.file.path },
+            { upsert: true, new: true }
+        );
+        res.json({ success: true, url: req.file.path });
+    } catch (err) { res.status(500).json({ error: 'Database error' }); }
+});
+
 // API Endpoint to get all orders
 router.get('/orders', async (req, res) => {
     try {
@@ -126,10 +156,14 @@ router.get('/orders', async (req, res) => {
 // API Endpoint to update an order status
 router.put('/orders/:id', async (req, res) => {
     const id = parseInt(req.params.id);
-    const { status } = req.body;
+    const { status, items } = req.body;
+    
+    const updateData = {};
+    if (status) updateData.status = status;
+    if (items) updateData.items = items;
     
     try {
-        const result = await Order.findOneAndUpdate({ id: id }, { status: status });
+        const result = await Order.findOneAndUpdate({ id: id }, updateData);
         if (!result) return res.status(404).json({ error: 'Order not found' });
         res.json({ success: true });
     } catch (err) { res.status(500).json({ error: 'Failed to update order' }); }
@@ -154,12 +188,30 @@ router.post('/orders', async (req, res) => {
     } catch (err) { res.status(500).json({ error: 'Failed to save order' }); }
 });
 
+// Login Rate Limiter
+const loginLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 5, // Limit each IP to 5 login requests per windowMs
+    message: { error: "Too many login attempts, please try again after 15 minutes" }
+});
+
 // API Endpoint for Admin Login
-router.post('/login', (req, res) => {
+router.post('/login', loginLimiter, (req, res) => {
     const { username, password } = req.body;
     console.log('Login attempt:', username, password);
-    if (username === 'admin' && password === 'sunshine') {
-        res.json({ success: true, token: 'admin-token' });
+    const user = username ? username.toLowerCase() : '';
+    if (user === 'admin' && password === 'sunshine') {
+        res.json({ success: true, token: 'admin-token', role: 'admin' });
+    } else if (user === 'manager' && password === 'sunshine') {
+        res.json({ success: true, token: 'manager-token', role: 'manager' });
+    } else if (user === 'worker' && password === 'sunshine') {
+        res.json({ success: true, token: 'worker-token', role: 'worker' });
+    } else if (user === 'cashier' && password === 'sunshine') {
+        res.json({ success: true, token: 'cashier-token', role: 'cashier' });
+    } else if (user === 'kitchen' && password === 'sunshine') {
+        res.json({ success: true, token: 'kitchen-token', role: 'kitchen' });
+    } else if (user === 'bar' && password === 'sunshine') {
+        res.json({ success: true, token: 'bar-token', role: 'bar' });
     } else {
         res.status(401).json({ error: 'Invalid credentials' });
     }

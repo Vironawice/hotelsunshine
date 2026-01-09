@@ -16,16 +16,13 @@ let lastOrderId = null;
 let notificationSoundUrl = 'https://actions.google.com/sounds/v1/alarms/beep_short.ogg';
 
 async function load(){
-  const ta = document.getElementById('menu-json');
-  ta.value = 'Loading...';
   try{
     currentMenuData = await fetchMenu();
-    ta.value = JSON.stringify(currentMenuData, null, 2);
     renderMenuTable(currentMenuData);
     populateItemSelect(currentMenuData);
     populateCategoryList(currentMenuData);
     populateAdminCategoryFilter(currentMenuData);
-  }catch(e){ ta.value = 'Error loading menu: ' + e.message; }
+  }catch(e){ console.error('Error loading menu: ' + e.message); }
   
   // Load custom sound setting
   try {
@@ -34,20 +31,6 @@ async function load(){
     if (data.url) notificationSoundUrl = data.url;
   } catch (e) { console.error('Failed to load sound setting'); }
 }
-
-document.getElementById('save').addEventListener('click', async ()=>{
-  if(!confirm('Are you sure you want to save changes to the menu JSON?')) return;
-  const ta = document.getElementById('menu-json');
-  const status = document.getElementById('status');
-  try{
-    const parsed = JSON.parse(ta.value);
-    const res = await fetch('/api/menu', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(parsed) });
-    if(!res.ok){ const e = await res.json(); status.textContent = 'Save failed: ' + (e.error||res.status); status.style.color='red'; return; }
-    status.textContent = 'Saved'; status.style.color='green';
-  }catch(e){ status.textContent = 'Invalid JSON: ' + e.message; status.style.color='red'; }
-});
-
-document.getElementById('reload').addEventListener('click', load);
 
 /* Visual Menu List Logic */
 function renderMenuTable(menu) {
@@ -260,24 +243,6 @@ document.getElementById('upload-btn').addEventListener('click', async () => {
   } catch (e) { alert('Error: ' + e.message); }
 });
 
-document.getElementById('upload-sound-btn').addEventListener('click', async () => {
-  const fileInput = document.getElementById('sound-input');
-  if (!fileInput.files[0]) return alert('Please select an audio file.');
-
-  const formData = new FormData();
-  formData.append('sound', fileInput.files[0]);
-
-  try {
-    const res = await fetch('/api/upload-sound', { method: 'POST', body: formData });
-    if (res.ok) {
-      const data = await res.json();
-      notificationSoundUrl = data.url;
-      alert('Sound uploaded successfully!');
-      fileInput.value = '';
-    } else { alert('Upload failed.'); }
-  } catch (e) { alert('Error: ' + e.message); }
-});
-
 document.getElementById('logout').addEventListener('click', () => {
   sessionStorage.removeItem('authToken');
   localStorage.removeItem('authToken');
@@ -432,6 +397,8 @@ document.getElementById('export-csv').addEventListener('click', async () => {
     alert('Export failed: ' + e.message);
   }
 });
+
+document.getElementById('print-sales').addEventListener('click', () => window.print());
 
 document.getElementById('refresh-orders').addEventListener('click', loadOrders);
 

@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bar Display System</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1a1a2e; color: #eee; padding: 20px; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #444; padding-bottom: 15px; }
+        .header h1 { color: #00d2d3; margin: 0; }
+        
+        .orders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
+        
+        .ticket { background: #fff; color: #333; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.3); display: flex; flex-direction: column; }
+        .ticket-header { background: #00d2d3; color: #000; padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
+        .ticket-info { padding: 10px 15px; background: #f9f9f9; border-bottom: 1px solid #eee; font-size: 0.9rem; }
+        .ticket-items { padding: 15px; flex-grow: 1; }
+        .ticket-items ul { list-style: none; padding: 0; margin: 0; }
+        .ticket-items li { padding: 8px 0; border-bottom: 1px dashed #ddd; font-size: 1.1rem; }
+        .ticket-items li:last-child { border-bottom: none; }
+        .qty { font-weight: bold; display: inline-block; width: 30px; color: #d9534f; }
+        
+        .ticket-actions { padding: 15px; background: #f4f4f4; text-align: center; }
+        .btn-logout { background-color: #d9534f; color: white; width: auto; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Bar Display</h1>
+            <button class="btn btn-logout" onclick="logout()">Logout</button>
+        </div>
+        <div id="orders-grid" class="orders-grid">
+            <p>Waiting for orders...</p>
+        </div>
+    </div>
+
+    <script>
+        if (!sessionStorage.getItem('authToken') && !localStorage.getItem('authToken')) {
+            window.location.href = '/login.html';
+        }
+
+        let lastOrderId = null;
+        let notificationSoundUrl = 'https://actions.google.com/sounds/v1/alarms/beep_short.ogg';
+
+        // Load custom sound
+        fetch('/api/settings/sound')
+            .then(res => res.json())
+            .then(data => { if(data.url) notificationSoundUrl = data.url; })
+            .catch(console.error);
+
+        async function loadOrders() {
+            const container = document.getElementById('orders-grid');
+            try {
+                const res = await fetch('/api/orders');
+                if (!res.ok) throw new Error('Failed to fetch');
+                const allOrders = await res.json();
+
+                // Filter: Only Pending orders
+                const pendingOrders = allOrders.filter(o => o.status !== 'Completed Order');
+
+                // Play sound on new pending order
+                if (pendingOrders.length > 0) {
+                    const latestId = pendingOrders[0].id;
+                    if (lastOrderId !== null && latestId !== lastOrderId) {
+                        new Audio(notificationSoundUrl).play().catch(e => console.log('Audio play failed', e));
+                    }
+                    lastOrderId = latestId;
+                }
+
+                const html = pendingOrders.map(order => {
+                    // Filter: Only Drink items
+                    const drinkItems = (order.items || []).filter(i => i.category === 'Drinks');
+                    
+                    // If order has no drink items, don't show ticket in bar
+                    if (drinkItems.length === 0) return '';
+
+                    const time = new Date(order.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                    
+                    return `
+                        <div class="ticket">
+                            <div class="ticket-header">
+                                <span>#${order.id}</span>
+                                <span>${time}</span>
+                            </div>
+                            <div class="ticket-info">
+                                <div><strong>Loc:</strong> ${order.location || 'N/A'}</div>
+                                <div><strong>Guest:</strong> ${order.customer ? order.customer.name : 'Guest'}</div>
+                            </div>
+                            <div class="ticket-items">
+                                <ul>
+                                    ${drinkItems.map(i => {
+                                        const isReady = i.completed;
+                                        return `<li style="${isReady ? 'opacity:0.5; text-decoration:line-through' : ''}">
+                                            <span class="qty">${i.qty}</span> ${i.name}
+                                            <button onclick="toggleItem(${order.id}, ${i.id}, ${!isReady})" style="float:right; cursor:pointer; padding:2px 8px; background:${isReady ? '#ccc' : '#4CAF50'}; color:white; border:none; border-radius:4px;">${isReady ? 'Undo' : 'Ready'}</button>
+                                        </li>`;
+                                    }).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+
+                container.innerHTML = html || '<p>No pending drink orders.</p>';
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        async function toggleItem(orderId, itemId, completed) {
+            try {
+                // Fetch current order to get items
+                const res = await fetch('/api/orders');
+                const orders = await res.json();
+                const order = orders.find(o => o.id === orderId);
+                if (!order) return;
+
+                const updatedItems = order.items.map(i => i.id === itemId ? { ...i, completed } : i);
+
+                await fetch(`/api/orders/${orderId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ items: updatedItems })
+                });
+                loadOrders();
+            } catch (e) { alert('Error updating order'); }
+        }
+
+        function logout() {
+            sessionStorage.removeItem('authToken');
+            localStorage.removeItem('authToken');
+            window.location.href = '/login.html';
+        }
+
+        // Poll every 5 seconds
+        loadOrders();
+        setInterval(loadOrders, 5000);
+    </script>
+</body>
+</html>
