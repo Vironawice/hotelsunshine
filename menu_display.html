@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sunshine Hotel Menu</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; background-color: #f9f9f9; }
+        h1 { text-align: center; color: #333; }
+        
+        /* Tab Navigation */
+        .tabs { display: flex; justify-content: center; margin-bottom: 20px; flex-wrap: wrap; }
+        .tab-button {
+            padding: 10px 20px; cursor: pointer; border: none; background: #ddd; 
+            margin: 5px; font-size: 16px; border-radius: 5px;
+        }
+        .tab-button.active { background: #ff9800; color: white; }
+
+        /* Menu Grid */
+        .menu-group { display: none; }
+        .menu-group.active { display: block; }
+        
+        .category-section { margin-bottom: 30px; }
+        .category-title { 
+            border-bottom: 2px solid #ff9800; padding-bottom: 5px; 
+            color: #ff9800; font-size: 1.5em; margin-bottom: 15px; 
+        }
+
+        .items-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;
+        }
+        .menu-item {
+            background: white; padding: 15px; border-radius: 8px; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            position: relative;
+        }
+        .item-header { display: flex; justify-content: space-between; font-weight: bold; margin-bottom: 5px; }
+        .item-price { color: #28a745; }
+        .item-desc { color: #666; font-size: 0.9em; }
+        .item-img { width: 100%; height: 150px; object-fit: cover; border-radius: 4px; margin-bottom: 10px; }
+        .sold-out-badge {
+            position: absolute; top: 10px; right: 10px;
+            background-color: #dc3545; color: white;
+            padding: 4px 8px; border-radius: 4px;
+            font-size: 12px; font-weight: bold;
+            z-index: 10;
+        }
+        .menu-item.sold-out { opacity: 0.7; }
+    </style>
+</head>
+<body>
+
+    <h1>Sunshine Hotel Menu</h1>
+
+    <div class="tabs" id="tabs">
+        <!-- Tabs will be injected here -->
+    </div>
+
+    <div id="menu-container">
+        <!-- Menu items will be injected here -->
+    </div>
+
+    <script>
+        // Define the grouping structure
+        const menuGroups = {
+            "Food": [
+                "Breakfast", "Appetizers", "Salads", "Specials", "Soups", 
+                "Main", "Pasta", "Burgers & Sandwiches", "Sides", "Desserts"
+            ],
+            "Non-Alcoholic Drinks": [
+                "Mocktails", "Smoothies", "Milkshakes", "Coffee", "Tea", 
+                "Water", "Soft Drinks", "Juices"
+            ],
+            "Alcoholic Drinks": [
+                "Cocktails", "Beers", "Aperitifs", "Rum", "Gin & Vodka", 
+                "Liquor", "Tequila", "Cognac & Brandy", "Whisky", "Wine", "Champagne"
+            ],
+            "Other": [
+                "Cigarettes"
+            ]
+        };
+
+        async function loadMenu() {
+            try {
+                let response = await fetch('/api/menu');
+                if(!response.ok) response = await fetch('menu.json');
+                const menuData = await response.json();
+                renderMenu(menuData);
+            } catch (error) {
+                console.error('Error loading menu:', error);
+                document.getElementById('menu-container').innerHTML = '<p>Error loading menu. Please ensure menu.json is accessible.</p>';
+            }
+        }
+
+        function renderMenu(menuData) {
+            const tabsContainer = document.getElementById('tabs');
+            const menuContainer = document.getElementById('menu-container');
+            
+            let isFirstTab = true;
+
+            for (const [groupName, categories] of Object.entries(menuGroups)) {
+                // Create Tab Button
+                const btn = document.createElement('button');
+                btn.className = `tab-button ${isFirstTab ? 'active' : ''}`;
+                btn.innerText = groupName;
+                btn.onclick = () => openTab(groupName);
+                tabsContainer.appendChild(btn);
+
+                // Create Group Container
+                const groupDiv = document.createElement('div');
+                groupDiv.id = groupName;
+                groupDiv.className = `menu-group ${isFirstTab ? 'active' : ''}`;
+
+                // Filter items for this group
+                const groupItems = menuData.filter(item => categories.includes(item.category));
+
+                if (groupItems.length === 0) {
+                    groupDiv.innerHTML = `<p>No items available in this section.</p>`;
+                } else {
+                    // Render Categories within the Group
+                    categories.forEach(category => {
+                        const categoryItems = groupItems.filter(item => item.category === category);
+                        
+                        if (categoryItems.length > 0) {
+                            const catSection = document.createElement('div');
+                            catSection.className = 'category-section';
+                            
+                            catSection.innerHTML = `
+                                <div class="category-title">${category}</div>
+                                <div class="items-grid">
+                                    ${categoryItems.map(item => `
+                                        <div class="menu-item ${item.soldOut ? 'sold-out' : ''}">
+                                            ${item.soldOut ? '<span class="sold-out-badge">Sold Out</span>' : ''}
+                                            ${item.image ? `<img src="${item.image}" alt="${item.name}" class="item-img">` : ''}
+                                            <div class="item-header">
+                                                <span>${item.name}</span>
+                                                <span class="item-price">₦${item.price.toLocaleString()}</span>
+                                            </div>
+                                            <div class="item-desc">${item.desc}</div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            `;
+                            groupDiv.appendChild(catSection);
+                        }
+                    });
+                }
+
+                menuContainer.appendChild(groupDiv);
+                isFirstTab = false;
+            }
+        }
+
+        function openTab(groupName) {
+            // Hide all groups
+            document.querySelectorAll('.menu-group').forEach(el => el.classList.remove('active'));
+            // Deactivate all buttons
+            document.querySelectorAll('.tab-button').forEach(el => el.classList.remove('active'));
+
+            // Show selected group
+            document.getElementById(groupName).classList.add('active');
+            
+            // Activate button (finding by text content for simplicity)
+            const buttons = document.querySelectorAll('.tab-button');
+            buttons.forEach(btn => {
+                if (btn.innerText === groupName) btn.classList.add('active');
+            });
+        }
+
+        loadMenu();
+    </script>
+</body>
+</html>

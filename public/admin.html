@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard</title>
+  <style>body{font-family:sans-serif; padding:20px; max-width: 1200px; margin: 0 auto;}</style>
+</head>
+<body>
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <h1>Admin Dashboard</h1>
+    <button id="logout" style="padding: 5px 15px; cursor: pointer;">Logout</button>
+  </div>
+  
+  <hr>
+  
+  <h3>Add / Edit Item</h3>
+  <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+    <input type="text" id="new-name" placeholder="Name">
+    <input type="number" id="new-price" placeholder="Price">
+    <input type="text" id="new-category" placeholder="Category">
+    <input type="text" id="new-desc" placeholder="Description" style="flex-grow: 1;">
+    <button id="add-item-btn">Add Item to List</button>
+    <button id="cancel-edit-btn" style="display:none;">Cancel</button>
+  </div>
+
+  <hr>
+
+  <h3>Menu Items</h3>
+  <div style="margin-bottom: 10px;">
+    <input type="text" id="admin-search-bar" placeholder="Search items..." style="padding: 5px;">
+    <select id="admin-category-filter" style="padding: 5px;"></select>
+  </div>
+  <div id="menu-table-container"></div>
+
+  <hr>
+
+  <h3>JSON Editor</h3>
+  <textarea id="menu-json" rows="10" style="width:100%; font-family: monospace;"></textarea>
+  <br>
+  <button id="save" style="margin-top: 5px;">Save JSON</button>
+  <button id="reload" style="margin-top: 5px;">Reload</button>
+  <span id="status" style="margin-left: 10px;"></span>
+
+  <hr>
+
+  <h3>Uploads</h3>
+  <p>Image: <select id="item-select"></select> <input type="file" id="image-input"> <button id="upload-btn">Upload</button></p>
+  <p>Sound: <input type="file" id="sound-input"> <button id="upload-sound-btn">Upload Sound</button></p>
+  <select id="category-list" style="display:none;"></select>
+
+  <script src="admin.js"></script>
+</body>
+</html>

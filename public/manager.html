@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manager Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>body{font-family:sans-serif; padding:20px; max-width: 1200px; margin: 0 auto;}</style>
+</head>
+<body>
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <h1>Manager Dashboard</h1>
+    <button id="logout" style="padding: 5px 15px; cursor: pointer;">Logout</button>
+  </div>
+
+  <div style="display:flex; gap:20px; flex-wrap: wrap;">
+    <div style="flex:1; min-width: 300px;">
+      <h3>Orders</h3>
+      <div style="margin-bottom: 10px;">
+        <button id="refresh-orders">Refresh</button>
+        <button id="export-csv">Export CSV</button>
+        <button id="print-sales">Print</button>
+      </div>
+      <div id="orders-list" style="max-height: 500px; overflow-y: auto;"></div>
+    </div>
+    <div style="flex:1; min-width: 300px;">
+      <h3>Sales Chart</h3>
+      <canvas id="sales-chart"></canvas>
+    </div>
+  </div>
+
+  <hr>
+
+  <h3>Menu Management</h3>
+  <div style="margin-bottom: 10px;">
+    <input type="text" id="admin-search-bar" placeholder="Search items..." style="padding: 5px;">
+    <select id="admin-category-filter" style="padding: 5px;"></select>
+  </div>
+  <div id="menu-table-container"></div>
+
+  <div style="margin-top:20px; border-top:1px solid #ccc; padding-top:10px;">
+    <h4>Add/Edit Item</h4>
+    <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+      <input type="text" id="new-name" placeholder="Name">
+      <input type="number" id="new-price" placeholder="Price">
+      <input type="text" id="new-category" placeholder="Category">
+      <input type="text" id="new-desc" placeholder="Description" style="flex-grow: 1;">
+      <button id="add-item-btn">Add Item to List</button>
+      <button id="cancel-edit-btn" style="display:none;">Cancel</button>
+    </div>
+  </div>
+
+  <div style="margin-top:20px;">
+    <p>Upload Image: <select id="item-select"></select> <input type="file" id="image-input"> <button id="upload-btn">Upload</button></p>
+    <select id="category-list" style="display:none;"></select>
+  </div>
+
+  <script src="manager.js"></script>
+</body>
+</html>

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cashier Dashboard</title>
+  <style>body{font-family:sans-serif; padding:20px;}</style>
+  <script>
+    if (!sessionStorage.getItem('authToken')) window.location.href = '/login.html';
+  </script>
+</head>
+<body>
+  <div style="display:flex; justify-content:space-between; align-items:center;">
+    <h1>Cashier Dashboard</h1>
+    <button id="logout" style="padding: 5px 15px; cursor: pointer;">Logout</button>
+  </div>
+  <hr>
+  <p>Cashier view coming soon...</p>
+  <script>
+    document.getElementById('logout').addEventListener('click', () => {
+      sessionStorage.removeItem('authToken');
+      window.location.href = '/login.html';
+    });
+  </script>
+</body>
+</html>
