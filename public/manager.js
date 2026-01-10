@@ -3,7 +3,8 @@ if (!sessionStorage.getItem('authToken') && !localStorage.getItem('authToken')) 
 }
 
 async function fetchMenu(){
-  const res = await fetch('/api/menu');
+  let res = await fetch('/api/menu');
+  if(!res.ok) res = await fetch('menu.json');
   if(!res.ok) throw new Error('failed to fetch');
   return await res.json();
 }
@@ -255,7 +256,8 @@ async function loadOrders() {
   container.innerHTML = '<p>Loading orders...</p>';
   
   try {
-    const res = await fetch('/api/orders');
+    let res = await fetch('/api/orders');
+    if(!res.ok) res = await fetch('orders.json');
     if (!res.ok) throw new Error('Failed to fetch orders');
     const orders = await res.json();
 

@@ -3,7 +3,8 @@ if (!sessionStorage.getItem('authToken') && !localStorage.getItem('authToken')) 
 }
 
 async function fetchMenu(){
-  const res = await fetch('/api/menu');
+  let res = await fetch('/api/menu');
+  if(!res.ok) res = await fetch('menu.json');
   if(!res.ok) throw new Error('failed to fetch');
   return await res.json();
 }

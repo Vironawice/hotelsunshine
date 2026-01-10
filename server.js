@@ -34,8 +34,8 @@ app.post('/api/login', (req, res) => {
   res.status(401).json({ error: 'Invalid credentials' });
 });
 
-const MENU_PATH = path.join(__dirname, 'menu.json');
-const ORDERS_PATH = path.join(__dirname, 'orders.json');
+const MENU_PATH = path.join(__dirname, 'public', 'menu.json');
+const ORDERS_PATH = path.join(__dirname, 'public', 'orders.json');
 
 function loadJSON(fp, fallback){
   try{
